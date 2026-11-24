@@ -1,0 +1,25 @@
+{
+  "name": "syno-sail-node",
+  "version": "1.0.0",
+  "description": "Docker configuration for Node.js projects on a Synology NAS with GUI managers (Dockhand, Dockge, Arcane, Portainer).",
+  "type": "module",
+  "license": "MIT",
+  "author": "smith89k",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smith89k/syno-sail-node.git"
+  },
+  "bin": {
+    "syno-sail-node": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "stubs"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

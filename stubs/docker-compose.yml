@@ -1,0 +1,82 @@
+services:
+  init:
+    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/smith89k/node-app:latest}
+    container_name: ${CONTAINER_NAME:-node-app}-init
+    user: "0:0"
+    entrypoint: ["sh", "-c",
+                 "mkdir -p /mnt/stack/app &&
+                 mkdir -p /mnt/stack/mariadb &&
+                 mkdir -p /mnt/stack/scripts &&
+                 cp -rf /app/docker/scripts/. /mnt/stack/scripts/ &&
+                 sed -i 's/\r$$//' /mnt/stack/scripts/*.sh &&
+                 chown -R 1000:1000 /mnt/stack/app"]
+    volumes:
+      - ./data:/mnt/stack
+    restart: "no"
+    security_opt:
+      - seccomp:unconfined
+
+  db:
+    image: mariadb:11.4
+    container_name: ${CONTAINER_NAME:-node-app}-db
+    restart: unless-stopped
+    environment:
+      - MARIADB_DATABASE=${DB_DATABASE:-app}
+      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD:-}
+      - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1
+      - MARIADB_AUTO_UPGRADE=1
+    volumes:
+      - ./data/mariadb:/var/lib/mysql
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--innodb_initialized"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    mem_limit: 768m
+    memswap_limit: 1280m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "2"
+    security_opt:
+      - seccomp:unconfined
+
+  app:
+    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/smith89k/node-app:latest}
+    container_name: ${CONTAINER_NAME:-node-app}-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-3000}
+      - TZ=${APP_TIMEZONE:-UTC}
+      - APP_URL=${APP_URL:-}
+      - HEALTH_PATH=${HEALTH_PATH:-/}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_DATABASE=${DB_DATABASE:-app}
+      - DB_USERNAME=${DB_USERNAME:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+    ports:
+      - "${APP_PORT:-8083}:${PORT:-3000}"
+    volumes:
+      # anything the app saves under /app/data survives updates and is backed up
+      - ./data/app:/app/data
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    mem_limit: 384m
+    memswap_limit: 768m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "2"
+    security_opt:
+      - seccomp:unconfined

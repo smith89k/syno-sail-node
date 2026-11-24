@@ -1,0 +1,3 @@
+# the files copied into projects must keep Unix line endings
+stubs/** text eol=lf
+bin/** text eol=lf
