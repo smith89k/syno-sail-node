@@ -80,6 +80,125 @@ Forward `APP_PORT` on your router, or use DSM **Control Panel -> Login Portal ->
 
 ---
 
+## Example Stack (copy & paste into Dockhand)
+
+A complete, tested stack for kitchen-rush (a Node.js game), served on port `8083` of a NAS at `192.168.1.20`. The `docker-compose.yml` is exactly what `npx github:smith89k/syno-sail-node install` writes (only the default names say `node-app`; the `.env` sets the real ones).
+
+<details>
+<summary><strong>docker-compose.yml</strong> (paste into the stack editor)</summary>
+
+```yaml
+services:
+  init:
+    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/smith89k/node-app:latest}
+    container_name: ${CONTAINER_NAME:-node-app}-init
+    user: "0:0"
+    entrypoint: ["sh", "-c",
+                 "mkdir -p /mnt/stack/app &&
+                 mkdir -p /mnt/stack/mariadb &&
+                 mkdir -p /mnt/stack/scripts &&
+                 cp -rf /app/docker/scripts/. /mnt/stack/scripts/ &&
+                 sed -i 's/\r$$//' /mnt/stack/scripts/*.sh &&
+                 chown -R 1000:1000 /mnt/stack/app"]
+    volumes:
+      - ./data:/mnt/stack
+    restart: "no"
+    security_opt:
+      - seccomp:unconfined
+
+  db:
+    image: mariadb:11.4
+    container_name: ${CONTAINER_NAME:-node-app}-db
+    restart: unless-stopped
+    environment:
+      - MARIADB_DATABASE=${DB_DATABASE:-app}
+      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD:-}
+      - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1
+      - MARIADB_AUTO_UPGRADE=1
+    volumes:
+      - ./data/mariadb:/var/lib/mysql
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--innodb_initialized"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    mem_limit: 768m
+    memswap_limit: 1280m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "2"
+    security_opt:
+      - seccomp:unconfined
+
+  app:
+    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/smith89k/node-app:latest}
+    container_name: ${CONTAINER_NAME:-node-app}-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-3000}
+      - TZ=${APP_TIMEZONE:-UTC}
+      - APP_URL=${APP_URL:-}
+      - HEALTH_PATH=${HEALTH_PATH:-/}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_DATABASE=${DB_DATABASE:-app}
+      - DB_USERNAME=${DB_USERNAME:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+    ports:
+      - "${APP_PORT:-8083}:${PORT:-3000}"
+    volumes:
+      # anything the app saves under /app/data survives updates and is backed up
+      - ./data/app:/app/data
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    mem_limit: 384m
+    memswap_limit: 768m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "2"
+    security_opt:
+      - seccomp:unconfined
+```
+
+</details>
+
+<details>
+<summary><strong>.env</strong> (paste into the .env editor, then change the values)</summary>
+
+```bash
+CONTAINER_NAME=kitchen-rush
+CONTAINER_REGISTRY_IMAGE=ghcr.io/smith89k/kitchen-rush:latest
+
+NODE_ENV=production
+APP_PORT=8083
+PORT=3000
+APP_TIMEZONE=Asia/Phnom_Penh
+APP_URL=http://192.168.1.20:8083
+HEALTH_PATH=/
+
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=kitchen_rush
+DB_USERNAME=root
+DB_PASSWORD=change-me
+```
+
+</details>
+
+---
+
 ## Step 3: Setting up Backups via DSM Task Scheduler
 
 `docker/scripts/backup.sh` dumps the database and compresses `data/app`, keeping 7 days of backups. Backups are saved outside the stack folder, in `/volume1/docker/backups/<your-project-name>`, so removing the stack does not remove them. Set `BACKUP_DIR` in `.env` to change that.
