@@ -4,8 +4,9 @@ set -e
 MAX_RETRIES=30
 RETRY_INTERVAL=3
 
-# Wait for MariaDB to accept connections before starting the app.
-if [ -n "${DB_HOST}" ]; then
+# Wait for MariaDB to accept connections before starting the app, but only
+# when the database is turned on (COMPOSE_PROFILES in .env includes "db").
+if echo ",${COMPOSE_PROFILES}," | grep -q ",db,"; then
     echo "Waiting for database at ${DB_HOST}:${DB_PORT:-3306}..."
     RETRY_COUNT=0
     until node -e '

@@ -17,6 +17,8 @@ services:
       - seccomp:unconfined
 
   db:
+    # optional: runs only when COMPOSE_PROFILES in .env includes "db"
+    profiles: ["db"]
     image: mariadb:11.4
     container_name: ${CONTAINER_NAME:-node-app}-db
     restart: unless-stopped
@@ -52,6 +54,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      - COMPOSE_PROFILES=${COMPOSE_PROFILES:-}
       - PORT=${PORT:-3000}
       - TZ=${APP_TIMEZONE:-UTC}
       - APP_URL=${APP_URL:-}
@@ -71,6 +74,8 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
+        # the app still starts when the database is turned off
+        required: false
     mem_limit: 384m
     memswap_limit: 768m
     logging:

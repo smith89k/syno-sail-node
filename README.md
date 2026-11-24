@@ -69,8 +69,19 @@ docker push ghcr.io/<GITHUB_USER>/<APP_NAME>:latest
 ### What the Services Do
 
 - **`init`**: a short-lived container that runs first. It creates the `data/app`, `data/mariadb` and `data/scripts` folders and copies the backup script out of your image onto the NAS.
-- **`db`**: MariaDB for your application (host `db`, port `3306`).
-- **`app`**: your Node.js app. It waits for the database, runs `npm run migrate` if you have that script, then `npm start`. A health check opens `HEALTH_PATH` (default `/`) to make sure it is answering.
+- **`db`**: MariaDB for your application (host `db`, port `3306`; optional, see below).
+- **`app`**: your Node.js app. It waits for the database (when it is on), runs `npm run migrate` if you have that script, then `npm start`. A health check opens `HEALTH_PATH` (default `/`) to make sure it is answering.
+
+### Turning the database on or off
+
+Everything is set in `.env`; the `docker-compose.yml` never needs editing. The MariaDB database is optional and controlled by one line:
+
+```bash
+COMPOSE_PROFILES=db   # database on (default)
+COMPOSE_PROFILES=     # database off
+```
+
+With the database off, the `db` container is not created, the app starts without waiting for it, and the backup skips the database dump. This uses Docker Compose profiles and needs Docker Compose 2.20 or newer (check with `docker compose version` over SSH).
 
 ### Why `security_opt: seccomp=unconfined`?
 
@@ -118,6 +129,8 @@ services:
       - seccomp:unconfined
 
   db:
+    # optional: runs only when COMPOSE_PROFILES in .env includes "db"
+    profiles: ["db"]
     image: mariadb:11.4
     container_name: ${CONTAINER_NAME:-node-app}-db
     restart: unless-stopped
@@ -153,6 +166,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      - COMPOSE_PROFILES=${COMPOSE_PROFILES:-}
       - PORT=${PORT:-3000}
       - TZ=${APP_TIMEZONE:-UTC}
       - APP_URL=${APP_URL:-}
@@ -172,6 +186,8 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
+        # the app still starts when the database is turned off
+        required: false
     mem_limit: 384m
     memswap_limit: 768m
     logging:
@@ -192,6 +208,8 @@ services:
 # Replace every <UPPERCASE> placeholder (see the README's placeholder table).
 CONTAINER_NAME=<APP_NAME>
 CONTAINER_REGISTRY_IMAGE=ghcr.io/<GITHUB_USER>/<APP_NAME>:latest
+# which optional services run: "db" turns the MariaDB database on, empty turns it off
+COMPOSE_PROFILES=db
 
 NODE_ENV=production
 # the port on the NAS people open, and the port the app listens on inside
