@@ -34,6 +34,8 @@ test('the containers are named after the project; an unknown GitHub user stays a
   assert.match(env, /^CONTAINER_NAME=my-shop$/m);
   assert.match(env, /^CONTAINER_REGISTRY_IMAGE=ghcr\.io\/<GITHUB_USER>\/my-shop:latest$/m);
   assert.ok(!env.includes('<APP_NAME>'), 'the app name is filled in everywhere');
+  assert.match(env, /^DB_DATABASE=my_shop$/m);
+  assert.match(env, /^DB_PASSWORD=<DB_PASSWORD>$/m, 'a password is never made up');
 });
 
 test('the GitHub user comes from package.json, or from the git remote', () => {

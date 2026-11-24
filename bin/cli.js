@@ -56,7 +56,8 @@ export function install(projectDir, { force = false, log = console.log } = {}) {
 }
 
 export function fillPlaceholders(body, projectDir, pkg) {
-  let out = body.replaceAll('<APP_NAME>', slug(pkg.name || path.basename(projectDir)));
+  const name = slug(pkg.name || path.basename(projectDir));
+  let out = body.replaceAll('<APP_NAME>', name).replaceAll('<DB_NAME>', name.replace(/-/g, '_'));
   const owner = githubOwner(projectDir, pkg);
   if (owner) out = out.replaceAll('<GITHUB_USER>', owner);
   return out;

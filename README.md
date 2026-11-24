@@ -26,7 +26,7 @@ This copies the following into your project root:
 - `Dockerfile` (builds your image: installs packages, runs your `build` script if you have one, then a small production image that runs `npm start` as a non-root user)
 - `docker-compose.yml` (the stack you deploy on Synology)
 - `docker/scripts/` (the start-up script and the backup script)
-- `.env.docker.example` (template for your production settings; `<APP_NAME>` and `<GITHUB_USER>` are filled in from `package.json` or the git remote when they can be found)
+- `.env.docker.example` (template for your production settings; `<APP_NAME>`, `<DB_NAME>` and `<GITHUB_USER>` are filled in from `package.json` or the git remote when they can be found)
 - `.dockerignore`
 - `.github/workflows/docker-build.yml` (builds and pushes your image to GitHub Container Registry on every push to `main`)
 
@@ -84,7 +84,7 @@ Forward `APP_PORT` on your router, or use DSM **Control Panel -> Login Portal ->
 
 ## Example Stack (copy & paste into Dockhand)
 
-A complete stack for a Node.js app, served on port `8083` of your NAS. The `docker-compose.yml` is exactly what `npx github:smith89k/syno-sail-node install` writes. Replace every `<UPPERCASE>` placeholder with your own value (see the table below); the `docker-compose.yml` needs no changes.
+A complete stack for a Node.js app, served on port `8083` of your NAS. The `docker-compose.yml` and `.env.docker.example` below are exactly what `npx github:smith89k/syno-sail-node install` writes. Replace every `<UPPERCASE>` placeholder in the `.env` with your own value (see the table below); the `docker-compose.yml` needs no changes.
 
 | Placeholder | What to put there |
 |---|---|
@@ -186,17 +186,21 @@ services:
 </details>
 
 <details>
-<summary><strong>.env</strong> (paste into the .env editor, then change the values)</summary>
+<summary><strong>.env.docker.example</strong> (paste into the .env editor, then fill in the placeholders)
 
 ```bash
+# Replace every <UPPERCASE> placeholder (see the README's placeholder table).
 CONTAINER_NAME=<APP_NAME>
 CONTAINER_REGISTRY_IMAGE=ghcr.io/<GITHUB_USER>/<APP_NAME>:latest
 
 NODE_ENV=production
+# the port on the NAS people open, and the port the app listens on inside
 APP_PORT=8083
 PORT=3000
 APP_TIMEZONE=Asia/Phnom_Penh
+# the address people use to reach the app
 APP_URL=http://<NAS_IP>:8083
+# the page the health check opens to see the app is alive
 HEALTH_PATH=/
 
 DB_HOST=db
