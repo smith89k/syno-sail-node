@@ -27,12 +27,25 @@ test('install writes every file under its real (dotted) name', () => {
   }
 });
 
-test('the containers are named after the project', () => {
+test('the containers are named after the project; an unknown GitHub user stays a placeholder', () => {
   const dir = project();
   install(dir, { log: quiet });
   const env = fs.readFileSync(path.join(dir, '.env.docker.example'), 'utf8');
   assert.match(env, /^CONTAINER_NAME=my-shop$/m);
-  assert.match(env, /^CONTAINER_REGISTRY_IMAGE=ghcr\.io\/smith89k\/my-shop:latest$/m);
+  assert.match(env, /^CONTAINER_REGISTRY_IMAGE=ghcr\.io\/<GITHUB_USER>\/my-shop:latest$/m);
+  assert.ok(!env.includes('<APP_NAME>'), 'the app name is filled in everywhere');
+});
+
+test('the GitHub user comes from package.json, or from the git remote', () => {
+  const a = project({ name: 'shop', scripts: { start: 'x' }, repository: { url: 'git+https://github.com/Some-User/shop.git' } });
+  install(a, { log: quiet });
+  assert.match(fs.readFileSync(path.join(a, '.env.docker.example'), 'utf8'), /^CONTAINER_REGISTRY_IMAGE=ghcr\.io\/some-user\/shop:latest$/m);
+
+  const b = project({ name: 'game', scripts: { start: 'x' } });
+  fs.mkdirSync(path.join(b, '.git'));
+  fs.writeFileSync(path.join(b, '.git', 'config'), ['[remote "origin"]', '\turl = git@github.com:other/game.git', ''].join('\n'));
+  install(b, { log: quiet });
+  assert.match(fs.readFileSync(path.join(b, '.env.docker.example'), 'utf8'), /^CONTAINER_REGISTRY_IMAGE=ghcr\.io\/other\/game:latest$/m);
 });
 
 test('shell scripts keep Unix line endings, so they run inside the container', () => {

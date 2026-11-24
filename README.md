@@ -2,6 +2,8 @@
 
 SynoSail Node is the Node.js sister of [SynoSail](https://github.com/smith89k/syno-sail). It drops a ready-made Docker setup into any Node.js project so you can deploy it on a **Synology NAS** with a GUI Docker manager such as **Dockhand**, **Dockge**, **Arcane** or **Portainer**.
 
+## Why this package?
+
 It follows the same steps as SynoSail: build the image on GitHub, paste the stack into your Docker manager, give the `data` folder the right permissions, and start it.
 
 ---
@@ -24,7 +26,7 @@ This copies the following into your project root:
 - `Dockerfile` (builds your image: installs packages, runs your `build` script if you have one, then a small production image that runs `npm start` as a non-root user)
 - `docker-compose.yml` (the stack you deploy on Synology)
 - `docker/scripts/` (the start-up script and the backup script)
-- `.env.docker.example` (template for your production settings)
+- `.env.docker.example` (template for your production settings; `<APP_NAME>` and `<GITHUB_USER>` are filled in from `package.json` or the git remote when they can be found)
 - `.dockerignore`
 - `.github/workflows/docker-build.yml` (builds and pushes your image to GitHub Container Registry on every push to `main`)
 
@@ -42,27 +44,27 @@ The included GitHub Actions workflow builds the image and pushes it to GitHub Co
 Alternatively, build locally:
 
 ```bash
-docker build -t ghcr.io/your-user/your-app:latest -f Dockerfile .
-docker push ghcr.io/your-user/your-app:latest
+docker build -t ghcr.io/<GITHUB_USER>/<APP_NAME>:latest -f Dockerfile .
+docker push ghcr.io/<GITHUB_USER>/<APP_NAME>:latest
 ```
 
 ---
 
-## Step 2: Preparing Dockhand (On Synology DSM 7.x)
+## Step 2: Preparing Dockhand (On Your Synology NAS)
 
 1. **Create the Stack (do not deploy yet!)**
    Open Dockhand (or Dockge/Arcane/Portainer) and create a new Stack.
    Paste your `docker-compose.yml` into the editor.
-   Paste `.env.docker.example` into the `.env` editor and fill it in: `CONTAINER_REGISTRY_IMAGE` (your GHCR image), `APP_PORT`, `APP_URL`, `DB_PASSWORD`.
+   Paste `.env.docker.example` into the `.env` editor and fill it in: `CONTAINER_NAME`, `CONTAINER_REGISTRY_IMAGE`, `APP_PORT`, `APP_URL`, `DB_DATABASE`, `DB_PASSWORD`.
    **Save the stack, but do NOT start it.**
 
 2. **Set Synology Folder Permissions (crucial)**
-   - Open **File Station** and go to the folder where the stack was saved (for example `/volume1/docker/dockhand/stacks/<your-environment-or-user>/<your-project-name>/`).
+   - Open **File Station** and go to the folder where the stack was saved (for example `/volume1/docker/dockhand/stacks/<ENVIRONMENT_OR_USER>/<PROJECT_NAME>/`).
    - Create a folder named `data` inside it.
    - Right-click `data` -> **Properties** -> **Permission**: give **Everyone** `Read & Write`, and tick "Apply to this folder, sub-folders and files".
 
 3. **Deploy the Stack**
-   Go back to your Docker manager and click **Start/Deploy**. Open `http://<your-nas>:<APP_PORT>`.
+   Go back to your Docker manager and click **Start/Deploy**. Open `http://<NAS_IP>:<APP_PORT>`.
 
 ### What the Services Do
 
@@ -74,7 +76,7 @@ docker push ghcr.io/your-user/your-app:latest
 
 Synology DSM runs Docker with an older default seccomp profile that blocks system calls newer images use (such as `clone3`), which makes containers crash on start. `seccomp=unconfined` lets them run normally on the NAS.
 
-### Playing or browsing from outside your home
+### Reaching the app from outside your home
 
 Forward `APP_PORT` on your router, or use DSM **Control Panel -> Login Portal -> Advanced -> Reverse Proxy**. If your app uses WebSockets (live updates, chat, games), open the rule's **Custom Header** tab and click **Create -> WebSocket**, or the page will load but the live connection will fail.
 
@@ -82,7 +84,16 @@ Forward `APP_PORT` on your router, or use DSM **Control Panel -> Login Portal ->
 
 ## Example Stack (copy & paste into Dockhand)
 
-A complete, tested stack for kitchen-rush (a Node.js game), served on port `8083` of a NAS at `192.168.1.20`. The `docker-compose.yml` is exactly what `npx github:smith89k/syno-sail-node install` writes (only the default names say `node-app`; the `.env` sets the real ones).
+A complete stack for a Node.js app, served on port `8083` of your NAS. The `docker-compose.yml` is exactly what `npx github:smith89k/syno-sail-node install` writes. Replace every `<UPPERCASE>` placeholder with your own value (see the table below); the `docker-compose.yml` needs no changes.
+
+| Placeholder | What to put there |
+|---|---|
+| `<GITHUB_USER>` | Your GitHub user name, in lowercase. |
+| `<APP_NAME>` | Your app's GitHub repository name, in lowercase. The workflow publishes the image as `ghcr.io/<GITHUB_USER>/<APP_NAME>`. |
+| `<NAS_IP>` | Your NAS's address on your network (DSM **Control Panel -> Network -> Network Interface**). |
+| `<DB_NAME>` | The database name, e.g. your app name with `_` instead of `-`. |
+| `<DB_PASSWORD>` | A strong password for the database's `root` user. |
+| `<ENVIRONMENT_OR_USER>`, `<PROJECT_NAME>` | The folders your Docker manager saved the stack in. |
 
 <details>
 <summary><strong>docker-compose.yml</strong> (paste into the stack editor)</summary>
@@ -90,7 +101,7 @@ A complete, tested stack for kitchen-rush (a Node.js game), served on port `8083
 ```yaml
 services:
   init:
-    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/smith89k/node-app:latest}
+    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/<GITHUB_USER>/<APP_NAME>:latest}
     container_name: ${CONTAINER_NAME:-node-app}-init
     user: "0:0"
     entrypoint: ["sh", "-c",
@@ -137,7 +148,7 @@ services:
       - seccomp:unconfined
 
   app:
-    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/smith89k/node-app:latest}
+    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/<GITHUB_USER>/<APP_NAME>:latest}
     container_name: ${CONTAINER_NAME:-node-app}-app
     restart: unless-stopped
     environment:
@@ -178,21 +189,21 @@ services:
 <summary><strong>.env</strong> (paste into the .env editor, then change the values)</summary>
 
 ```bash
-CONTAINER_NAME=kitchen-rush
-CONTAINER_REGISTRY_IMAGE=ghcr.io/smith89k/kitchen-rush:latest
+CONTAINER_NAME=<APP_NAME>
+CONTAINER_REGISTRY_IMAGE=ghcr.io/<GITHUB_USER>/<APP_NAME>:latest
 
 NODE_ENV=production
 APP_PORT=8083
 PORT=3000
 APP_TIMEZONE=Asia/Phnom_Penh
-APP_URL=http://192.168.1.20:8083
+APP_URL=http://<NAS_IP>:8083
 HEALTH_PATH=/
 
 DB_HOST=db
 DB_PORT=3306
-DB_DATABASE=kitchen_rush
+DB_DATABASE=<DB_NAME>
 DB_USERNAME=root
-DB_PASSWORD=change-me
+DB_PASSWORD=<DB_PASSWORD>
 ```
 
 </details>
@@ -201,7 +212,7 @@ DB_PASSWORD=change-me
 
 ## Step 3: Setting up Backups via DSM Task Scheduler
 
-`docker/scripts/backup.sh` dumps the database and compresses `data/app`, keeping 7 days of backups. Backups are saved outside the stack folder, in `/volume1/docker/backups/<your-project-name>`, so removing the stack does not remove them. Set `BACKUP_DIR` in `.env` to change that.
+`docker/scripts/backup.sh` dumps the database and compresses `data/app`, keeping 7 days of backups. Backups are saved outside the stack folder, in `/volume1/docker/backups/<PROJECT_NAME>`, so removing the stack does not remove them. Set `BACKUP_DIR` in `.env` to change that.
 
 1. Open **Control Panel** -> **Task Scheduler** -> **Create** -> **Scheduled Task** -> **User-defined script**.
 2. **General**: name it "Node Backup", user `root`.
@@ -209,7 +220,7 @@ DB_PASSWORD=change-me
 4. **Task Settings** -> "Run command":
 
 ```bash
-cd /volume1/docker/dockhand/stacks/<your-environment-or-user>/<your-project-name>
+cd /volume1/docker/dockhand/stacks/<ENVIRONMENT_OR_USER>/<PROJECT_NAME>
 DEPLOY_PATH=$(pwd) sh ./data/scripts/backup.sh
 ```
 

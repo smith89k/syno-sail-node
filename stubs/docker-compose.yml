@@ -1,6 +1,6 @@
 services:
   init:
-    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/smith89k/node-app:latest}
+    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/<GITHUB_USER>/<APP_NAME>:latest}
     container_name: ${CONTAINER_NAME:-node-app}-init
     user: "0:0"
     entrypoint: ["sh", "-c",
@@ -47,7 +47,7 @@ services:
       - seccomp:unconfined
 
   app:
-    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/smith89k/node-app:latest}
+    image: ${CONTAINER_REGISTRY_IMAGE:-ghcr.io/<GITHUB_USER>/<APP_NAME>:latest}
     container_name: ${CONTAINER_NAME:-node-app}-app
     restart: unless-stopped
     environment:
