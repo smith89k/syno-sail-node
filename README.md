@@ -6,16 +6,16 @@
 
 **Run your Node.js app on a Synology NAS: build the image on GitHub, paste one stack into your Docker manager, press start.**
 
-<a href="https://github.com/smith89k/syno-sail-node#readme"><img src="https://img.shields.io/badge/install-npx-5FA04E" alt="Install with npx"></a>
-<a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%E2%89%A518-5FA04E" alt="Node 18 or newer"></a>
-<a href="https://github.com/smith89k/syno-sail-node/blob/main/LICENSE"><img src="https://img.shields.io/github/license/smith89k/syno-sail-node" alt="License"></a>
-<a href="https://github.com/smith89k/syno-sail-node#readme"><img src="https://img.shields.io/badge/Synology-DSM%207-0C4B8E" alt="Synology DSM 7"></a>
+<img src="https://img.shields.io/badge/install-npx-5FA04E" alt="Install with npx">
+<img src="https://img.shields.io/badge/node-%E2%89%A518-5FA04E" alt="Node 18 or newer">
+<a href="https://github.com/smith89k/syno-sail-node/blob/main/LICENSE"><img src="https://img.shields.io/github/license/smith89k/syno-sail-node" alt="Licence"></a>
+<img src="https://img.shields.io/badge/Synology-DSM%207-0C4B8E" alt="Synology DSM 7">
 
 </div>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.png">
-  <img src="art/banner-light.png" alt="SynoSail Node: npx syno-sail-node install produces a Dockerfile and docker-compose.yml, which run as a stack on a Synology NAS." width="100%">
+  <img src="art/banner-light.png" alt="SynoSail Node: one npx command in a Node project produces a Dockerfile and docker-compose.yml, and the stack runs on a Synology NAS." width="100%">
 </picture>
 
 SynoSail Node is the Node.js sister of [SynoSail](https://github.com/smith89k/syno-sail). It drops a ready-made Docker setup into any Node.js project so you can deploy it on a **Synology NAS** with a GUI Docker manager such as **Dockhand**, **Dockge**, **Arcane** or **Portainer**.
