@@ -1,9 +1,22 @@
-<p align="center">
-  <a href="https://github.com/smith89k/syno-sail-node">
-    <img src="https://raw.githubusercontent.com/smith89k/syno-sail-node/main/.github/assets/banner.png"
-         alt="SynoSail Node — a production Docker stack for Node.js, made for your Synology NAS" width="920">
-  </a>
-</p>
+<div align="center">
+
+<img src="art/logo.svg" width="112" height="112" alt="SynoSail Node logo">
+
+# SynoSail Node
+
+**Run your Node.js app on a Synology NAS: build the image on GitHub, paste one stack into your Docker manager, press start.**
+
+<a href="https://github.com/smith89k/syno-sail-node#readme"><img src="https://img.shields.io/badge/install-npx-5FA04E" alt="Install with npx"></a>
+<a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%E2%89%A518-5FA04E" alt="Node 18 or newer"></a>
+<a href="https://github.com/smith89k/syno-sail-node/blob/main/LICENSE"><img src="https://img.shields.io/github/license/smith89k/syno-sail-node" alt="License"></a>
+<a href="https://github.com/smith89k/syno-sail-node#readme"><img src="https://img.shields.io/badge/Synology-DSM%207-0C4B8E" alt="Synology DSM 7"></a>
+
+</div>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.png">
+  <img src="art/banner-light.png" alt="SynoSail Node: npx syno-sail-node install produces a Dockerfile and docker-compose.yml, which run as a stack on a Synology NAS." width="100%">
+</picture>
 
 SynoSail Node is the Node.js sister of [SynoSail](https://github.com/smith89k/syno-sail). It drops a ready-made Docker setup into any Node.js project so you can deploy it on a **Synology NAS** with a GUI Docker manager such as **Dockhand**, **Dockge**, **Arcane** or **Portainer**.
 
