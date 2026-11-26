@@ -1,4 +1,9 @@
-# SynoSail Node - Synology Node.js Docker Configuration
+<p align="center">
+  <a href="https://github.com/smith89k/syno-sail-node">
+    <img src="https://raw.githubusercontent.com/smith89k/syno-sail-node/main/.github/assets/banner.png"
+         alt="SynoSail Node — a production Docker stack for Node.js, made for your Synology NAS" width="920">
+  </a>
+</p>
 
 SynoSail Node is the Node.js sister of [SynoSail](https://github.com/smith89k/syno-sail). It drops a ready-made Docker setup into any Node.js project so you can deploy it on a **Synology NAS** with a GUI Docker manager such as **Dockhand**, **Dockge**, **Arcane** or **Portainer**.
 
